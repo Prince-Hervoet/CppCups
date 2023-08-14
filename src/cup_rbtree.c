@@ -74,7 +74,6 @@ void Insert(CupRbTree* tree, void* data) {
     } else {
       tree->root = node;
     }
-
     insertCase1(node);
   } else {
     // 更新一下
@@ -125,7 +124,16 @@ void insertCase4(CupRbTreeNode* node) {
   insertCase5(node);
 }
 
-void insertCase5(CupRbTreeNode* node) {}
+void insertCase5(CupRbTreeNode* node) {
+  CupRbTreeNode* grandparent = getGrandparent(node);
+  node->parent->color = BLACK;
+  grandparent->color = RED;
+  if (node == node->parent->left && node->parent == grandparent->left) {
+    rightRotate(node->parent);
+  } else {
+    leftRotate(node->parent);
+  }
+}
 
 void leftRotate(CupRbTreeNode* node) {
   if (node == NULL) return;
