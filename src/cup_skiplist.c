@@ -25,17 +25,6 @@ static int getRandomLevel() {
   return (level < SKIPLIST_MAX_LEVEL) ? level : SKIPLIST_MAX_LEVEL;
 }
 
-CupSkipList* MakeCupSkipList() {
-  // 初始化头节点
-  CupSkipListNode* headNode = createNode(SKIPLIST_MAX_LEVEL);
-  CupSkipList* list = (CupSkipList*)malloc(sizeof(CupSkipList));
-  list->maxLevel = 0;
-  list->size = 0;
-  list->head = headNode;
-  list->tail = headNode;
-  return list;
-}
-
 static CupSkipListData* listSearch(CupSkipList* sl, char* key) {
   if (sl->size == 0 || sl == NULL || key == NULL) {
     return NULL;
@@ -59,6 +48,27 @@ static CupSkipListData* listSearch(CupSkipList* sl, char* key) {
   return NULL;
 }
 
+static void freeSkipListNode(CupSkipList* sl, CupSkipListNode* node) {
+  if (node == NULL) {
+    return;
+  }
+  free(node->levelsPtr);
+  free(node->cdata->key);
+  sl->freer(node->cdata->data);
+  free(node);
+}
+
+CupSkipList* MakeCupSkipList() {
+  // 初始化头节点
+  CupSkipListNode* headNode = createNode(SKIPLIST_MAX_LEVEL);
+  CupSkipList* list = (CupSkipList*)malloc(sizeof(CupSkipList));
+  list->maxLevel = 0;
+  list->size = 0;
+  list->head = headNode;
+  list->tail = headNode;
+  return list;
+}
+
 void* Search(CupSkipList* sl, char* key) {
   CupSkipListData* cd = listSearch(sl, key);
   if (cd != NULL) {
@@ -68,17 +78,14 @@ void* Search(CupSkipList* sl, char* key) {
 }
 
 void Insert(CupSkipList* sl, char* key, void* data, double score) {
-  if (key == NULL) {
-    return NULL;
-  }
+  if (key == NULL) return NULL;
   int newLevel = getRandomLevel();
-  sl->maxLevel = sl->maxLevel < newLevel ? newLevel : sl->maxLevel;
-  CupSkipListNode* node = createNode(newLevel);
-  CupSkipListNode* run = sl->head;
-  CupSkipListNode* nextNode = NULL;
+  sl->maxLevel = sl->maxLevel > newLevel ? sl->maxLevel : newLevel;
+  CupSkipListNode *run = sl->head, *nextNode = NULL,
+                  *node = createNode(newLevel);
   CupSkipListNode* needUpdateNodes[newLevel];
   int res = 0;
-  for (int i = sl->maxLevel; i >= 0; i--) {
+  for (int i = sl->maxLevel - 1; i >= 0; i--) {
     nextNode = run->levelsPtr[i];
     while (nextNode != NULL) {
       res = strcmp(nextNode->cdata->key, key);
@@ -87,14 +94,31 @@ void Insert(CupSkipList* sl, char* key, void* data, double score) {
       } else if (res < 0) {
         run = nextNode;
       } else {
-        // todo: 用freer free
+        sl->freer(nextNode->cdata->data);
         nextNode->cdata->data = data;
+        freeSkipListNode(sl, node);
         return;
       }
     }
-    if (i <= newLevel) {
-      node->levelsPtr[i] = run->levelsPtr[i];
-      run->levelsPtr[i] = node;
+    if (i < newLevel) {
+      needUpdateNodes[i] = run;
     }
   }
+  for (int i = 0; i < newLevel; i++) {
+    node->levelsPtr[i] = run->levelsPtr[i];
+    run->levelsPtr[i] = node;
+  }
+}
+
+void FreeSkipList(CupSkipList* sl) {
+  if (sl == NULL) {
+    return;
+  }
+  CupSkipListNode* run = sl->head;
+  CupSkipListNode* nextNode = run->levelsPtr[0];
+  while (nextNode != NULL) {
+    run = nextNode->levelsPtr[0];
+    freeSkipListNode(sl, nextNode);
+  }
+  free(sl);
 }
