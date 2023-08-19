@@ -1,8 +1,8 @@
-#include "cup_string.h"
+#include "cup_skiplist.h"
 
 int main() {
-  CupString* cs = MakeCupString();
-  int len = Len(cs);
-  FreeCupString(cs);
+  CupSkipList* sl = MakeCupSkipList();
+  char a[] = "123";
+  Insert(sl, a, NULL, 1);
   return 0;
 }

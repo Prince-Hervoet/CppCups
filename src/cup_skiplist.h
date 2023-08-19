@@ -1,4 +1,5 @@
 #pragma once
+#include <string.h>
 
 typedef void (*Freer)(void* data);
 
@@ -11,10 +12,10 @@ typedef struct {
   Freer freer;
 } CupSkipListDataFreer;
 
-typedef struct {
+typedef struct CupSkipListNode {
   CupSkipListData* cdata;
   double score;
-  CupSkipListNode** levelsPtr;
+  struct CupSkipListNode** levelsPtr;
 } CupSkipListNode;
 
 typedef struct {

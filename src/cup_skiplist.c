@@ -1,7 +1,6 @@
 #include "cup_skiplist.h"
 
 #include <stdlib.h>
-#include <string.h>
 #include <time.h>
 
 #define SKIPLIST_MAX_LEVEL 32
