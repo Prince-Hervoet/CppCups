@@ -26,6 +26,7 @@ class ThreadPool {
   int Size() { return threadSize; }
   int CoreCapacity() { return coreCapacity; }
   int Capacity() { return threadCapacity; }
+  void Stop();
 
  private:
   int coreSize;
@@ -36,11 +37,12 @@ class ThreadPool {
   std::mutex mu;
   std::condition_variable cond;
   std::queue<WorkerTask*> tasks;
-  std::set<std::thread> threads;
+  std::set<Worker*> threads;
 
   static void threadRunFunc(void* args);
-  int addTask(taskBlock* task);
-  bool createThread(bool isCore, taskBlock* task);
-  bool addTaskToQueue(taskBlock* task, bool isTry);
+  int addTask(WorkerTask* task);
+  bool createThread(bool isCore, WorkerTask* task);
+  bool addTaskToQueue(WorkerTask* task, bool isTry);
+  void removeWorker(Worker* w);
 };
 }  // namespace letMeSee

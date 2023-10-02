@@ -2,7 +2,7 @@
 
 namespace letMeSee {
 int ThreadPool::Commit(TaskType taskFunc, void* args) {
-  taskBlock* task = new taskBlock();
+  WorkerTask* task = new WorkerTask();
   task->taskFunc = taskFunc;
   task->args = args;
   int ans = addTask(task);
@@ -10,7 +10,7 @@ int ThreadPool::Commit(TaskType taskFunc, void* args) {
   return ans;
 }
 
-int ThreadPool::addTask(taskBlock* task) {
+int ThreadPool::addTask(WorkerTask* task) {
   if (!isActive) return 0;
   if (coreSize < coreCapacity) {
     if (createThread(true, task)) return 1;
@@ -24,9 +24,38 @@ int ThreadPool::addTask(taskBlock* task) {
   return 1;
 }
 
-bool ThreadPool::createThread(bool isCore, taskBlock* task) {
+bool ThreadPool::createThread(bool isCore, WorkerTask* task) {
   std::unique_lock<std::mutex> lock(mu);
   if (!isActive) return false;
   if (isCore && coreSize == coreCapacity) return false;
+  Worker* w = new Worker(this, task);
+  if (isCore) coreSize += 1;
+  threadSize += 1;
+  w->Start();
+}
+
+void ThreadPool::Stop() {
+  if (!isActive) return;
+  {
+    std::unique_lock<std::mutex> lock(mu);
+    if (!isActive) return;
+    isActive = false;
+    for (auto it = threads.begin(); it != threads.end(); ++it) (*it)->Stop();
+    cond.notify_all();
+  }
+  for (auto it = threads.begin(); it != threads.end(); ++it) {
+    (*it)->Join();
+    delete (*it);
+  }
+  threads.clear();
+}
+
+void ThreadPool::removeWorker(Worker* w) {
+  if (w == nullptr) return;
+  std::unique_lock<std::mutex> lock(mu);
+  if (!isActive) return;
+  w->Detach();
+  threads.erase(w);
+  delete w;
 }
 }  // namespace letMeSee

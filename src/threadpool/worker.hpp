@@ -17,6 +17,8 @@ class Worker {
   Worker() {}
   Worker(ThreadPool* owner) : owner(owner) {}
   Worker(ThreadPool* owner, WorkerTask* task) : owner(owner), firstTask(task) {}
+  Worker(ThreadPool* owner, WorkerTask* task, bool isCore)
+      : owner(owner), firstTask(task), isCore(isCore) {}
 
   void Start() {
     if (isActive) return;
@@ -25,8 +27,24 @@ class Worker {
     this->t = std::move(nThread);
   }
 
+  void Stop() {
+    if (!isActive) return;
+    isActive = false;
+  }
+
+  void Join() {
+    if (t.joinable()) t.join();
+  }
+
+  void Detach() {
+    if (t.joinable()) t.detach();
+  }
+
+  bool IsActive() { return isActive; }
+
  private:
   volatile bool isActive;
+  bool isCore;
   ThreadPool* owner;
   std::thread t;
   WorkerTask* firstTask;

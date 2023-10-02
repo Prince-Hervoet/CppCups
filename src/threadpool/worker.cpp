@@ -13,16 +13,18 @@ void Worker::threadRunFunc(void* args) {
     }
     delete task;
     task = nullptr;
+    if (!w->isCore) break;
   }
+  if (!w->isCore) w->owner->removeWorker(w);
 }
 
 WorkerTask* Worker::getTaskFromQueue(Worker* w) {
   ThreadPool* owner = w->owner;
   std::unique_lock<std::mutex> lock(owner->mu);
-  while (owner->tasks.empty() && owner->isActive) {
+  while (owner->tasks.empty() && w->isActive) {
     owner->cond.wait(lock);
   }
-  if (!owner->isActive) return nullptr;
+  if (!w->isActive) return nullptr;
   WorkerTask* task = owner->tasks.front();
   owner->tasks.pop();
   return task;
