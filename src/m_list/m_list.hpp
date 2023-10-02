@@ -25,6 +25,7 @@ class Mlist {
     this->tail = new mlistMiniNode();
     this->head->next = (mlistNode*)(this->tail);
     this->tail->prev = (mlistNode*)(this->head);
+    this->endIterator = tail;
   }
 
   void AddFirst(ValueType& value) {
@@ -48,6 +49,8 @@ class Mlist {
   }
 
   bool IsEmpty() { return size == 0; }
+
+  size_t Size() { return size; }
 
   void PopLast() {
     if (size == 0) return;
@@ -73,9 +76,29 @@ class Mlist {
     return head->next.data;
   }
 
+  class Iterator {
+   public:
+    Iterator() {}
+
+    ~Iterator() {}
+
+    ValueType& Get() { return *ptr; }
+
+   private:
+    ValueType* ptr;
+  };
+
+  Iterator* Begin(){return beginPrevIterator}
+
+  Iterator* End() {
+    return endIterator;
+  }
+
  private:
   size_t size;
   mlistMiniNode* head;
   mlistMiniNode* tail;
+  Iterator* beginPrevIterator;
+  Iterator* endIterator;
 };
 }  // namespace letMeSee
