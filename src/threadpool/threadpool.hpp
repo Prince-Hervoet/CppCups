@@ -33,13 +33,14 @@ class ThreadPool {
   int coreCapacity;
   int threadSize;
   int threadCapacity;
+  int taskCapacity;
   bool isActive;
   std::mutex mu;
   std::condition_variable cond;
+  std::condition_variable addCond;
   std::queue<WorkerTask*> tasks;
   std::set<Worker*> threads;
 
-  static void threadRunFunc(void* args);
   int addTask(WorkerTask* task);
   bool createThread(bool isCore, WorkerTask* task);
   bool addTaskToQueue(WorkerTask* task, bool isTry);

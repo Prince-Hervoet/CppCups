@@ -24,10 +24,23 @@ int ThreadPool::addTask(WorkerTask* task) {
   return 1;
 }
 
+bool ThreadPool::addTaskToQueue(WorkerTask* task, bool isTry) {
+  if (!isActive) return false;
+  std::unique_lock<std::mutex> lock(mu);
+  while (tasks.size() == taskCapacity && isActive) {
+    if (isTry) return false;
+    addCond.wait(lock);
+  }
+  if (!isActive) return false;
+  tasks.emplace(task);
+  return true;
+}
+
 bool ThreadPool::createThread(bool isCore, WorkerTask* task) {
   std::unique_lock<std::mutex> lock(mu);
   if (!isActive) return false;
   if (isCore && coreSize == coreCapacity) return false;
+  if (threadSize == threadCapacity) return false;
   Worker* w = new Worker(this, task);
   if (isCore) coreSize += 1;
   threadSize += 1;
