@@ -79,26 +79,48 @@ class Mlist {
   class Iterator {
    public:
     Iterator() {}
+    Iterator(Mlist* owner) : owner(owner) { this->nodePtr = owner->head->next; }
 
     ~Iterator() {}
 
-    ValueType& Get() { return *ptr; }
+    bool HasNext() { return nodePtr != owner->tail; }
+
+    ValueType& Next() {
+      if (!HasNext()) throw "index out of limit";
+      ValueType& value = nodePtr->data;
+      nodePtr = nodePtr->next;
+      return value;
+    }
+
+    void Reset() { nodePtr = owner->head; }
 
    private:
-    ValueType* ptr;
+    Mlist* owner;
+    mlistNode* nodePtr;
   };
 
-  Iterator* Begin(){return beginPrevIterator}
+  Iterator GetIterator() {
+    Iterator it(this);
+    return it;
+  }
 
-  Iterator* End() {
-    return endIterator;
+  void Remove(Iterator& it) {
+    mlistNode* target = it.nodePtr;
+    if (target == head || target == tail) return;
+    mlistNode* prevNode = target->prev;
+    mlistNode* nextNode = target->next;
+    prevNode->next = nextNode;
+    nextNode->prev = prevNode;
+    target->next = nullptr;
+    target->prev = nullptr;
+    delete target;
+    it.nodePtr = nextNode;
+    size -= 1;
   }
 
  private:
   size_t size;
   mlistMiniNode* head;
   mlistMiniNode* tail;
-  Iterator* beginPrevIterator;
-  Iterator* endIterator;
 };
 }  // namespace letMeSee

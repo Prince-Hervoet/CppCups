@@ -54,6 +54,7 @@ void ThreadPool::Stop() {
     if (!isActive) return;
     isActive = false;
     for (auto it = threads.begin(); it != threads.end(); ++it) (*it)->Stop();
+    addCond.notify_all();
     cond.notify_all();
   }
   for (auto it = threads.begin(); it != threads.end(); ++it) {
