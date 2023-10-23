@@ -5,6 +5,9 @@
 #include <string>
 #include <vector>
 
+/**
+ * 模块，用户自定义
+ */
 class Module {
  public:
   Module() {}
