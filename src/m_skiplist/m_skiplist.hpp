@@ -45,11 +45,20 @@ class Mskiplist {
 
  private:
   int current_max_level;
+  size_t size;
   MskiplistNode<K, T>* header;
 
  public:
   Mskiplist() {}
-  ~Mskiplist() {}
+  ~Mskiplist() {
+    MskiplistNode<K, T>* run = header;
+    while (run != nullptr) {
+      MskiplistNode<K, T>* temp = run->levelPtr[0];
+      delete run;
+      run = temp;
+    }
+    size = 0;
+  }
 
   T* Get(K& key) {
     int startLevel = current_max_level;
@@ -102,6 +111,7 @@ class Mskiplist {
       }
     }
     if (current_max_level < level) current_max_level = level;
+    ++size;
   }
 
   void Remove(K& key) {}
