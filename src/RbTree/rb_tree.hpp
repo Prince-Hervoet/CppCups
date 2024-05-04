@@ -1,6 +1,8 @@
 #ifndef _RADIX_TREE_H_
 #define _RADIX_TREE_H_
 
+#include <cstddef>
+#include <iostream>
 #include <utility>
 const char kRed = 1;
 const char kBlack = 2;
@@ -17,16 +19,16 @@ class RbTreeNode {
 
  public:
   char color;
-  RbTreeNodePtr left;
-  RbTreeNodePtr right;
-  RbTreeNodePtr parent;
+  RbTreeNodePtr left = nullptr;
+  RbTreeNodePtr right = nullptr;
+  RbTreeNodePtr parent = nullptr;
   K key;
   V value;
 
  public:
   RbTreeNodePtr getGrandparnet() {
-    if (this->parent == nullptr) return nullptr;
-    return this->parent->parent;
+    if (parent == nullptr) return nullptr;
+    return parent->parent;
   }
 
   RbTreeNodePtr getUncle() {
@@ -37,6 +39,14 @@ class RbTreeNode {
     else
       return grandparent->left;
   }
+
+  RbTreeNodePtr getBrother() {
+    if (parent == nullptr) return nullptr;
+    if (this == parent->left)
+      return parent->right;
+    else
+      return parent->left;
+  }
 };
 
 template <typename K, typename V>
@@ -46,25 +56,66 @@ class RbTree {
   using ComparerFunc = int (*)(const K& k1, const K& k2);
 
  public:
+  int GetSize() const { return size; }
+
   template <typename K2 = K, typename V2 = V>
   void Insert(K2&& key, V2&& value) {
     RbTreeNodePtr nNode =
         new RbTreeNode<K2, V2>(std::forward<K2>(key), std::forward<V2>(value));
+    nNode->color = kRed;
     if (root == nullptr)
       root = nNode;
-    else if (!insert(nNode))
+    else if (!insert(nNode)) {
+      delete (nNode);
       return;
-    insertJudge(nNode);
+    }
+    judgeInsert(nNode);
+    size++;
+  }
+
+  template <typename K2 = K>
+  V& Get(const K2&& key) {
+    RbTreeNodePtr run = root;
+    while (run) {
+      int result = comparer(key, run->key);
+      if (result < 0) {
+        run = run->left;
+      } else if (result > 0) {
+        run = run->right;
+      } else {
+        return run->value;
+      }
+    }
+    throw "This key does not exist.";
+  }
+
+  template <typename K2 = K>
+  void Delete(const K2&& key) {}
+
+  template <typename K2 = K>
+  bool Contains(const K2&& key) {
+    RbTreeNodePtr run = root;
+    while (run) {
+      int result = comparer(key, run->key);
+      if (result < 0) {
+        run = run->left;
+      } else if (result > 0) {
+        run = run->right;
+      } else {
+        return true;
+      }
+    }
+    return false;
   }
 
  private:
-  RbTreeNodePtr root;
+  RbTreeNodePtr root = nullptr;
   ComparerFunc comparer;
   bool is_multiple = false;
+  unsigned int size = 0;
 
  public:
-  RbTree() {}
-  RbTree(ComparerFunc comparer) {}
+  RbTree(ComparerFunc comparer) : comparer(comparer) {}
 
  private:
   void rightRotate(RbTreeNodePtr node) {
@@ -111,6 +162,7 @@ class RbTree {
     RbTreeNodePtr run = root;
     RbTreeNodePtr insertPoint = nullptr;
     while (run) {
+      insertPoint = run;
       int result = comparer(node->key, run->key);
       if (result < 0) {
         run = run->left;
@@ -122,7 +174,6 @@ class RbTree {
         else
           return false;
       }
-      insertPoint = run->parent;
     }
     if (insertPoint->left)
       insertPoint->right = node;
@@ -132,12 +183,12 @@ class RbTree {
     return true;
   }
 
-  void insertJudge(RbTreeNodePtr target) {
+  void judgeInsert(RbTreeNodePtr target) {
     if (target == nullptr) return;
     if (target->parent == nullptr)
       target->color = kBlack;
     else
-      insertCaseOne();
+      insertCaseOne(target);
   }
 
   void insertCaseOne(RbTreeNodePtr node) {
@@ -154,7 +205,7 @@ class RbTree {
       uncle->color = kBlack;
       RbTreeNodePtr grandparent = node->getGrandparnet();
       if (grandparent) grandparent->color = kRed;
-      insertJudge(grandparent);
+      judgeInsert(grandparent);
     } else
       insertCaseThree(node);
   }
