@@ -37,7 +37,8 @@ void* FixedMemoryPool::GetMemory() {
 }
 
 void FixedMemoryPool::FreeMemory(void* ptr) {
-  if (ptr == nullptr) return;
+  if (ptr == nullptr)
+    return;
   const MY_NUM_TYPE real_size = block_size + sizeof(FixedMemoryBlock);
   FixedMemoryBlock* run = next_block;
   while (run) {
@@ -48,7 +49,8 @@ void FixedMemoryPool::FreeMemory(void* ptr) {
     }
     break;
   }
-  if (run == nullptr) return;
+  if (run == nullptr)
+    return;
   ((ImbedPtr*)ptr)->next = run->next_free;
   run->next_free = (ImbedPtr*)ptr;
 }
@@ -56,7 +58,8 @@ void FixedMemoryPool::FreeMemory(void* ptr) {
 void* FixedMemoryPool::createMemory() {
   const MY_NUM_TYPE head_size = sizeof(FixedMemoryBlock);
   void* ptr = malloc(block_size + head_size);
-  if (ptr == nullptr) throw std::invalid_argument("MyFunc argument too large.");
+  if (ptr == nullptr)
+    throw std::invalid_argument("argument too large.");
   ((FixedMemoryBlock*)ptr)->next_block = nullptr;
   ImbedPtr* run = (ImbedPtr*)(((char*)ptr) + head_size);
   ((FixedMemoryBlock*)ptr)->next_free = run;
@@ -69,7 +72,8 @@ void* FixedMemoryPool::createMemory() {
 }
 
 void FixedMemoryPool::Reset() {
-  if (next_block == nullptr) return;
+  if (next_block == nullptr)
+    return;
   FixedMemoryBlock* run = next_block;
   FixedMemoryBlock* temp = nullptr;
   while (run) {
