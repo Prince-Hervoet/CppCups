@@ -14,6 +14,7 @@ static void moveRoutineSpace(RoutinePtr routine, char* array_last,
   if (routine == nullptr) return;
   unsigned int used_size = array_last - current_top;
   assert(used_size <= SHARE_STACK_SIZE);
+  return;
 }
 
 void RoutinesManager::initRoutine(RoutinePtr routine) {
