@@ -90,7 +90,20 @@ class RbTree {
   }
 
   template <typename K2 = K>
-  void Delete(const K2&& key) {}
+  void Remove(const K2&& key) {
+    RbTreeNodePtr run = root;
+    while (run) {
+      int result = comparer(key, run->key);
+      if (result < 0) {
+        run = run->left;
+      } else if (result > 0) {
+        run = run->right;
+      } else {
+        break;
+      }
+    }
+    if (run == nullptr) return;
+  }
 
   template <typename K2 = K>
   bool Contains(const K2&& key) {
@@ -234,6 +247,45 @@ class RbTree {
       leftRotate(parent);
     }
   }
+
+ private:
+  void remove(RbTreeNodePtr node) {
+    RbTreeNodePtr flag = nullptr;
+    RbTreeNodePtr node_parent = node->parent;
+    char node_color = node->color;
+    if (node->left == nullptr || node->right == nullptr) {
+      if (node->left)
+        flag = node->left;
+      else
+        flag = node->right;
+      if (flag) flag->parent = node_parent;
+      if (node_parent) {
+        if (node_parent->left == node)
+          node_parent->left = flag;
+        else
+          node_parent->right = flag;
+      } else {
+        root = flag;
+      }
+    } else {
+      RbTreeNodePtr run = node->right;
+      while (run->left) run = run->left;
+      if (node_parent) {
+        if (node_parent->left == node)
+          node_parent->left = run;
+        else
+          node_parent->right = run;
+        run->parent = node_parent;
+      } else {
+        root = run;
+      }
+      if (run == node->right) {
+        run->left = node->left;
+        node->left->parent = run;
+      }
+    }
+  }
+  RbTreeNodePtr replaceNode(RbTreeNodePtr target) {}
 };
 
 #endif

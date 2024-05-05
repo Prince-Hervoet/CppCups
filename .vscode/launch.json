@@ -8,7 +8,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/src/RbTree/a.exe",
+            "program": "${workspaceFolder}/src/Routines/a.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

@@ -1,0 +1,1 @@
+cmd /c && clang -c simple_context.S && clang++ main.cpp routines.cpp routines.hpp simple_context.o
