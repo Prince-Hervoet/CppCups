@@ -26,8 +26,6 @@ class Routine {
   using RoutinesManagerPtr = RoutinesManager*;
   using ArgsType = void*;
   friend class RoutinesManager;
-  friend void moveRoutineSpace(RoutinePtr routine, char* array_last,
-                               char* current_top);
 
  private:
   SimpleContext ctx;

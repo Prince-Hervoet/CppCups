@@ -48,23 +48,20 @@ RoutinePtr RoutinesManager::CreateRoutine(TaskType func, void* args) {
 
 void RoutinesManager::innerRoutineRun(RoutinesManagerPtr rm) {
   RoutinePtr routine = rm->current;
-  if (routine) {
-    try {
-      routine->func(rm, routine->args);
-    } catch (std::exception& e) {
-      std::cout << e.what() << std::endl;
-    }
+  assert(routine != nullptr);
+  try {
+    routine->func(rm, routine->args);
+  } catch (std::exception& e) {
+    std::cout << e.what() << std::endl;
   }
-  if (routine) {
-    routine->status = DEAD_STATUS;
-    delete[] routine->stack_ptr;
-    routine->stack_size = 0;
-    RoutinePtr ret = routine->parent;
-    SimpleContextPtr ctx_ptr = ret == nullptr ? &(rm->host) : &(ret->ctx);
-    routine->parent = nullptr;
-    rm->current = nullptr;
-    SetContext(ctx_ptr);
-  }
+  routine->status = DEAD_STATUS;
+  delete[] routine->stack_ptr;
+  routine->stack_size = 0;
+  RoutinePtr ret = routine->parent;
+  SimpleContextPtr ctx_ptr = ret == nullptr ? &(rm->host) : &(ret->ctx);
+  routine->parent = nullptr;
+  rm->current = nullptr;
+  SetContext(ctx_ptr);
 }
 
 void RoutinesManager::ResumeRoutine(RoutinePtr routine) {
