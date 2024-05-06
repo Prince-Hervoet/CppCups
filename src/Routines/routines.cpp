@@ -1,6 +1,7 @@
 #include "routines.hpp"
 
 #include <cassert>
+#include <cstring>
 
 #include "simple_context.hpp"
 
@@ -9,22 +10,28 @@
 
 namespace let_me_see {
 
-static void moveRoutineSpace(RoutinePtr routine, char* array_last,
-                             char* current_top) {
+void RoutinesManager::moveRoutineSpace(RoutinePtr routine, char* current_top) {
   if (routine == nullptr) return;
-  unsigned int used_size = array_last - current_top;
+  char* max_top = share_stack + SHARE_STACK_SIZE;
+  unsigned int used_size = max_top - current_top;
   assert(used_size <= SHARE_STACK_SIZE);
-  return;
+  if (used_size > routine->stack_size) {
+    delete[] routine->stack_ptr;
+    routine->stack_ptr = new char[used_size];
+    routine->stack_size = used_size;
+  }
+  memcpy(routine->stack_ptr, share_stack, used_size);
+  memset(share_stack, 0, SHARE_STACK_SIZE);
 }
 
 void RoutinesManager::initRoutine(RoutinePtr routine) {
   if (routine->status != INIT_STATUS) return;
-  SimpleContext* ctxPtr = &(routine->ctx);
-  ctxPtr->rsp = share_stack + SHARE_STACK_SIZE - 1;
-  ctxPtr->rbp = ctxPtr->rsp;
-  ctxPtr->rip = (void*)innerRoutineRun;
-  ctxPtr->rcx = this;
-  ctxPtr->rdx = routine->args;
+  SimpleContext* ctx_ptr = &(routine->ctx);
+  ctx_ptr->rsp = share_stack + SHARE_STACK_SIZE - 1;
+  ctx_ptr->rbp = ctx_ptr->rsp;
+  ctx_ptr->rip = (void*)innerRoutineRun;
+  ctx_ptr->rcx = this;
+  ctx_ptr->rdx = routine->args;
   routine->status = READY_STATUS;
 }
 
@@ -43,7 +50,7 @@ void RoutinesManager::ResumeRoutine(RoutinePtr routine) {
   MAKE_MEMORY_FLAG;
   if (routine == nullptr) return;
   if ((routine->status & (DEAD_STATUS | RUNNING_STATUS))) return;
-  moveRoutineSpace(current, share_stack + SHARE_STACK_SIZE, &MEMORY_FLAG_NAME);
+  moveRoutineSpace(current, &MEMORY_FLAG_NAME);
   initRoutine(routine);
   SimpleContext* src_ctx = &host;
   if (current) {
@@ -52,6 +59,7 @@ void RoutinesManager::ResumeRoutine(RoutinePtr routine) {
     routine->parent = current;
     current = routine;
   }
+  routine->status = RUNNING_STATUS;
   SwapContext(src_ctx, &(routine->ctx));
 }
 

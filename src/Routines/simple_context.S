@@ -67,7 +67,7 @@ SwapContext:
     movq %rax, 120(%rcx)
     movq $0, %rax
 
-    movq %rcx, %rax
+    movq %rdx, %rax
     movq 0(%rax), %rsp
     movq 8(%rax), %rbp
     movq 16(%rax), %rbx

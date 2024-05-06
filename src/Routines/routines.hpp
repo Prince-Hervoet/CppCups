@@ -20,11 +20,13 @@ using ContextFunc = void (*)();
 class RoutinesManager;
 using TaskType = void (*)(RoutinesManager* rm, void*);
 class Routine {
-  friend class RoutinesManager;
   using RoutineType = Routine;
   using RoutinePtr = Routine*;
   using RoutinesManagerPtr = RoutinesManager*;
   using ArgsType = void*;
+  friend class RoutinesManager;
+  friend void moveRoutineSpace(RoutinePtr routine, char* array_last,
+                               char* current_top);
 
  private:
   SimpleContext ctx;
@@ -55,6 +57,7 @@ class RoutinesManager {
 
  private:
   void initRoutine(RoutinePtr routine);
+  void moveRoutineSpace(RoutinePtr routine, char* current_top);
   static void innerRoutineRun(RoutinesManagerPtr rm, void* args);
 };
 
