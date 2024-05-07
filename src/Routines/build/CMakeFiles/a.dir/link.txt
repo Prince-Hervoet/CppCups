@@ -1,3 +1,1 @@
-D:\cmake-3.29.2-windows-x86_64\bin\cmake.exe -E rm -f CMakeFiles\a.dir/objects.a
-D:\mingw\bin\ar.exe qc CMakeFiles\a.dir/objects.a @CMakeFiles\a.dir\objects1.rsp
-D:\mingw\bin\c++.exe -Wl,--whole-archive CMakeFiles\a.dir/objects.a -Wl,--no-whole-archive -o a.exe -Wl,--out-implib,liba.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\a.dir\linkLibs.rsp
+/usr/bin/c++ -g CMakeFiles/a.dir/simple_context.S.o CMakeFiles/a.dir/main.cpp.o CMakeFiles/a.dir/routines.cpp.o -o a 

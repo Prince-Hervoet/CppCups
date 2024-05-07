@@ -4,20 +4,26 @@ set(CMAKE_DEPENDS_IN_PROJECT_ONLY OFF)
 
 # The set of languages for which implicit dependencies are needed:
 set(CMAKE_DEPENDS_LANGUAGES
+  "ASM"
+  )
+# The set of files for implicit dependencies of each language:
+set(CMAKE_DEPENDS_CHECK_ASM
+  "/home/tester/projects/Routines/simple_context.S" "/home/tester/projects/Routines/build/CMakeFiles/a.dir/simple_context.S.o"
+  )
+set(CMAKE_ASM_COMPILER_ID "GNU")
+
+# The include file search paths:
+set(CMAKE_ASM_TARGET_INCLUDE_PATH
   )
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "D:/myprojects/C-Cup/src/Routines/main.cpp" "CMakeFiles/a.dir/main.cpp.obj" "gcc" "CMakeFiles/a.dir/main.cpp.obj.d"
-  "D:/myprojects/C-Cup/src/Routines/routines.cpp" "CMakeFiles/a.dir/routines.cpp.obj" "gcc" "CMakeFiles/a.dir/routines.cpp.obj.d"
+  "/home/tester/projects/Routines/main.cpp" "CMakeFiles/a.dir/main.cpp.o" "gcc" "CMakeFiles/a.dir/main.cpp.o.d"
+  "/home/tester/projects/Routines/routines.cpp" "CMakeFiles/a.dir/routines.cpp.o" "gcc" "CMakeFiles/a.dir/routines.cpp.o.d"
   )
 
-# Targets to which this target links which contain Fortran sources.
-set(CMAKE_Fortran_TARGET_LINKED_INFO_FILES
-  )
-
-# Targets to which this target links which contain Fortran sources.
-set(CMAKE_Fortran_TARGET_FORWARD_LINKED_INFO_FILES
+# Targets to which this target links.
+set(CMAKE_TARGET_LINKED_INFO_FILES
   )
 
 # Fortran module output directory.

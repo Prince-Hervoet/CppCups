@@ -3,7 +3,6 @@
 #include <cassert>
 #include <cstring>
 #include <exception>
-#include <ios>
 #include <iostream>
 
 #include "simple_context.hpp"
@@ -13,7 +12,11 @@
 
 namespace let_me_see {
 
-void RoutinesManager::moveRoutineSpace(RoutinePtr routine, char* current_top) {
+void* AlignAddress(void* ptr) {
+  return (char*)((uintptr_t)(ptr) & ~15ull) - sizeof(void*);
+}
+
+void RoutinesManager::moveRoutineOut(RoutinePtr routine, char* current_top) {
   if (routine == nullptr) return;
   char* max_top = share_stack + SHARE_STACK_SIZE;
   unsigned int used_size = max_top - current_top;
@@ -23,18 +26,25 @@ void RoutinesManager::moveRoutineSpace(RoutinePtr routine, char* current_top) {
     routine->stack_ptr = new char[used_size];
     routine->stack_size = used_size;
   }
+  routine->used_size = used_size;
   memcpy(routine->stack_ptr, share_stack, used_size);
-  memset(share_stack, 0, SHARE_STACK_SIZE);
+  // memset(share_stack, 0, SHARE_STACK_SIZE);
+}
+
+void RoutinesManager::moveRoutineIn(RoutinePtr routine) {
+  if (routine == nullptr) return;
+  char* dest_ptr =
+      (char*)ALIGN_ADDRESS((char*)share_stack + SHARE_STACK_SIZE - 1);
+  memcpy(dest_ptr, routine->stack_ptr, routine->used_size);
 }
 
 void RoutinesManager::initRoutine(RoutinePtr routine) {
   if (routine->status != INIT_STATUS) return;
   SimpleContext* ctx_ptr = &(routine->ctx);
-  ctx_ptr->rsp = share_stack + SHARE_STACK_SIZE - 1;
+  ctx_ptr->rsp = ALIGN_ADDRESS((char*)share_stack + SHARE_STACK_SIZE - 1);
   ctx_ptr->rbp = ctx_ptr->rsp;
   ctx_ptr->rip = (void*)innerRoutineRun;
-  ctx_ptr->rcx = this;
-  ctx_ptr->rdx = routine->args;
+  ctx_ptr->rdi = this;
   routine->status = READY_STATUS;
 }
 
@@ -48,6 +58,7 @@ RoutinePtr RoutinesManager::CreateRoutine(TaskType func, void* args) {
 }
 
 void RoutinesManager::innerRoutineRun(RoutinesManagerPtr rm) {
+  assert(rm != nullptr);
   RoutinePtr routine = rm->current;
   assert(routine != nullptr);
   try {
@@ -71,9 +82,11 @@ void RoutinesManager::ResumeRoutine(RoutinePtr routine) {
   // 如果当前协程是死亡或者正在执行的状态就不继续
   if ((routine->status & (DEAD_STATUS | RUNNING_STATUS))) return;
   // 先尝试将当前正在执行的协程copy出去（如果有的话）
-  moveRoutineSpace(current, &MEMORY_FLAG_NAME);
-  // 尝试初始化协程结构
-  initRoutine(routine);
+  moveRoutineOut(current, &MEMORY_FLAG_NAME);
+  if (routine->status == INIT_STATUS)
+    initRoutine(routine);
+  else if (routine->status == SUSPEND_STATUS)
+    moveRoutineIn(routine);
   SimpleContext* src_ctx = &host;
   if (current) {
     src_ctx = &(current->ctx);
@@ -82,7 +95,7 @@ void RoutinesManager::ResumeRoutine(RoutinePtr routine) {
   }
   routine->status = RUNNING_STATUS;
   current = routine;
-  char* str = "XXNNN";
+  // char* str = "XXNNN";
   SwapContext(src_ctx, &(routine->ctx));
 }
 
@@ -90,7 +103,7 @@ void RoutinesManager::YieldRoutine() {
   MAKE_MEMORY_FLAG;  // 内存标记，此时这个变量在栈顶
   if (current == nullptr) return;
   // 先尝试将当前正在执行的协程copy出去（如果有的话）
-  moveRoutineSpace(current, &MEMORY_FLAG_NAME);
+  moveRoutineOut(current, &MEMORY_FLAG_NAME);
   SimpleContextPtr desc_ctx = &host;
   if (current->parent) desc_ctx = &(current->parent->ctx);
   SwapContext(&(current->ctx), desc_ctx);

@@ -15,8 +15,10 @@
 
 namespace let_me_see {
 
-using ContextFunc = void (*)();
+#define ALIGN_ADDRESS(x) \
+  ((void*)((char*)((uintptr_t)(x) & ~(15ull)) - sizeof(void*)))
 
+using ContextFunc = void (*)();
 class RoutinesManager;
 using ArgsType = void*;
 using TaskType = void (*)(RoutinesManager* rm, void*);
@@ -34,6 +36,7 @@ class Routine {
   char status = INIT_STATUS;
   char* stack_ptr = nullptr;
   unsigned int stack_size = 0;
+  unsigned int used_size = 0;
   TaskType func = nullptr;
   ArgsType args = nullptr;
   RoutinePtr parent = nullptr;
@@ -59,13 +62,15 @@ class RoutinesManager {
 
  private:
   void initRoutine(RoutinePtr routine);
-  void moveRoutineSpace(RoutinePtr routine, char* current_top);
+  void moveRoutineOut(RoutinePtr routine, char* current_top);
+  void moveRoutineIn(RoutinePtr routine);
   static void innerRoutineRun(RoutinesManagerPtr rm);
 };
 
 using RoutineType = Routine;
 using RoutinePtr = Routine*;
 using RoutinesManagerPtr = RoutinesManager*;
+void* AlignAddress(void* ptr);
 }  // namespace let_me_see
 
 #endif

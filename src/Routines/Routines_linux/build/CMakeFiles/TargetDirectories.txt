@@ -1,3 +1,0 @@
-/home/tester/projects/Routines/build/CMakeFiles/a.dir
-/home/tester/projects/Routines/build/CMakeFiles/edit_cache.dir
-/home/tester/projects/Routines/build/CMakeFiles/rebuild_cache.dir

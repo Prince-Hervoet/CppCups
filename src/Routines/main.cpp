@@ -1,26 +1,29 @@
-#include <cstddef>
+#include <ucontext.h>
+
+#include <cstdlib>
 #include <iostream>
 
 #include "routines.hpp"
-#include "simple_context.hpp"
 
 void test(let_me_see::RoutinesManagerPtr rm, void *args) {
-  // std::cout << rm << " " << args << std::endl;
+  int a = 1;
+  rm->YieldRoutine();
   std::cout << "run test" << std::endl;
+  int b = 10;
 }
 
 int main() {
+  // let_me_see::SimpleContext c0, c1;
+  // c1.rsp = let_me_see::AlignAddress((char *)malloc(877) + 876);
+  // c1.rbp = c1.rsp;
+  // c1.rip = (void *)test;
+  // let_me_see::SetContext(&c1);
+  // let_me_see::SwapContext(&c0, &c1);
+  // free((char *)c1.rsp);
   let_me_see::RoutinesManager rm;
   let_me_see::RoutinePtr routine =
       let_me_see::RoutinesManager::CreateRoutine(test, nullptr);
   rm.ResumeRoutine(routine);
-  std::cout << "main test" << std::endl;
-  //   let_me_see::SimpleContext s1, s2;
-  //   s2.rsp = new char[48];
-  //   s2.rbp = s2.rsp;
-  //   s2.rip = (void *)test;
-  //   char *flag = "123123123";
-  //   let_me_see::SwapContext(&s1, &s2);
-  //   delete[] (char *)(s2.rsp);
+  std::cout << "run main" << std::endl;
   return 0;
 }

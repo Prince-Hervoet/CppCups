@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/a.dir/simple_context.S.o CMakeFiles/a.dir/main.cpp.o CMakeFiles/a.dir/routines.cpp.o -o a 
