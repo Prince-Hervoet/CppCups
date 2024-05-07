@@ -18,13 +18,15 @@ namespace let_me_see {
 using ContextFunc = void (*)();
 
 class RoutinesManager;
+using ArgsType = void*;
 using TaskType = void (*)(RoutinesManager* rm, void*);
+
 class Routine {
  public:
   using RoutineType = Routine;
   using RoutinePtr = Routine*;
   using RoutinesManagerPtr = RoutinesManager*;
-  using ArgsType = void*;
+
   friend class RoutinesManager;
 
  private:
@@ -51,9 +53,9 @@ class RoutinesManager {
 
  public:
   void Start(RoutinePtr routine);
-  RoutinePtr CreateRoutine(TaskType func, void* args);
+  static RoutinePtr CreateRoutine(TaskType func, void* args);
   void ResumeRoutine(RoutinePtr routine);
-  static void YieldRoutine(RoutinesManagerPtr rm);
+  void YieldRoutine();
 
  private:
   void initRoutine(RoutinePtr routine);

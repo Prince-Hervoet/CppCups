@@ -4,13 +4,15 @@
 #include "routines.hpp"
 #include "simple_context.hpp"
 
-void test(let_me_see::RoutinesManager *rm, void *args) {
+void test(let_me_see::RoutinesManagerPtr rm, void *args) {
+  // std::cout << rm << " " << args << std::endl;
   std::cout << "run test" << std::endl;
 }
 
 int main() {
   let_me_see::RoutinesManager rm;
-  let_me_see::RoutinePtr routine = rm.CreateRoutine(test, nullptr);
+  let_me_see::RoutinePtr routine =
+      let_me_see::RoutinesManager::CreateRoutine(test, nullptr);
   rm.ResumeRoutine(routine);
   std::cout << "main test" << std::endl;
   //   let_me_see::SimpleContext s1, s2;

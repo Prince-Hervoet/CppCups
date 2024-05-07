@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstring>
 #include <exception>
+#include <ios>
 #include <iostream>
 
 #include "simple_context.hpp"
@@ -65,10 +66,13 @@ void RoutinesManager::innerRoutineRun(RoutinesManagerPtr rm) {
 }
 
 void RoutinesManager::ResumeRoutine(RoutinePtr routine) {
-  MAKE_MEMORY_FLAG;
+  MAKE_MEMORY_FLAG;  // 内存标记，此时这个变量在栈顶
   if (routine == nullptr) return;
+  // 如果当前协程是死亡或者正在执行的状态就不继续
   if ((routine->status & (DEAD_STATUS | RUNNING_STATUS))) return;
+  // 先尝试将当前正在执行的协程copy出去（如果有的话）
   moveRoutineSpace(current, &MEMORY_FLAG_NAME);
+  // 尝试初始化协程结构
   initRoutine(routine);
   SimpleContext* src_ctx = &host;
   if (current) {
@@ -78,8 +82,18 @@ void RoutinesManager::ResumeRoutine(RoutinePtr routine) {
   }
   routine->status = RUNNING_STATUS;
   current = routine;
-  char* dd = "123123123";
+  char* str = "XXNNN";
   SwapContext(src_ctx, &(routine->ctx));
+}
+
+void RoutinesManager::YieldRoutine() {
+  MAKE_MEMORY_FLAG;  // 内存标记，此时这个变量在栈顶
+  if (current == nullptr) return;
+  // 先尝试将当前正在执行的协程copy出去（如果有的话）
+  moveRoutineSpace(current, &MEMORY_FLAG_NAME);
+  SimpleContextPtr desc_ctx = &host;
+  if (current->parent) desc_ctx = &(current->parent->ctx);
+  SwapContext(&(current->ctx), desc_ctx);
 }
 
 }  // namespace let_me_see
