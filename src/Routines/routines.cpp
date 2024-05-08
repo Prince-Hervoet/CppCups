@@ -18,30 +18,29 @@ void* AlignAddress(void* ptr) {
 
 void RoutinesManager::moveRoutineOut(RoutinePtr routine, char* current_top) {
   if (routine == nullptr) return;
-  char* max_top = share_stack + SHARE_STACK_SIZE;
-  unsigned int used_size = max_top - current_top;
+  unsigned int used_size = share_stack + SHARE_STACK_SIZE - current_top;
   assert(used_size <= SHARE_STACK_SIZE);
   if (used_size > routine->stack_size) {
+    unsigned int new_size = static_cast<unsigned int>(used_size * 1.5);
     delete[] routine->stack_ptr;
-    routine->stack_ptr = new char[used_size];
-    routine->stack_size = used_size;
+    routine->stack_ptr = new char[new_size];
+    routine->stack_size = new_size;
   }
   routine->used_size = used_size;
-  memcpy(routine->stack_ptr, share_stack, used_size);
+  memcpy(routine->stack_ptr, current_top, used_size);
   // memset(share_stack, 0, SHARE_STACK_SIZE);
 }
 
 void RoutinesManager::moveRoutineIn(RoutinePtr routine) {
   if (routine == nullptr) return;
-  char* dest_ptr =
-      (char*)ALIGN_ADDRESS((char*)share_stack + SHARE_STACK_SIZE - 1);
+  char* dest_ptr = fix_stack_ptr - routine->used_size + 1;
   memcpy(dest_ptr, routine->stack_ptr, routine->used_size);
 }
 
 void RoutinesManager::initRoutine(RoutinePtr routine) {
   if (routine->status != INIT_STATUS) return;
   SimpleContext* ctx_ptr = &(routine->ctx);
-  ctx_ptr->rsp = ALIGN_ADDRESS((char*)share_stack + SHARE_STACK_SIZE - 1);
+  ctx_ptr->rsp = fix_stack_ptr;
   ctx_ptr->rbp = ctx_ptr->rsp;
   ctx_ptr->rip = (void*)innerRoutineRun;
   ctx_ptr->rdi = this;
@@ -95,7 +94,6 @@ void RoutinesManager::ResumeRoutine(RoutinePtr routine) {
   }
   routine->status = RUNNING_STATUS;
   current = routine;
-  // char* str = "XXNNN";
   SwapContext(src_ctx, &(routine->ctx));
 }
 
@@ -106,6 +104,9 @@ void RoutinesManager::YieldRoutine() {
   moveRoutineOut(current, &MEMORY_FLAG_NAME);
   SimpleContextPtr desc_ctx = &host;
   if (current->parent) desc_ctx = &(current->parent->ctx);
+  current->status = SUSPEND_STATUS;
+  current = current->parent;
+  moveRoutineIn(current);
   SwapContext(&(current->ctx), desc_ctx);
 }
 

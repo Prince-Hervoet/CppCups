@@ -15,8 +15,10 @@
 
 namespace let_me_see {
 
+#define ALIGNMENT_MASK (15ull)
+#define PTR_SIZE sizeof(void*)
 #define ALIGN_ADDRESS(x) \
-  ((void*)((char*)((uintptr_t)(x) & ~(15ull)) - sizeof(void*)))
+  ((void*)((char*)((uintptr_t)(x) & ~ALIGNMENT_MASK) - PTR_SIZE))
 
 using ContextFunc = void (*)();
 class RoutinesManager;
@@ -50,9 +52,16 @@ class RoutinesManager {
 
  private:
   char share_stack[SHARE_STACK_SIZE];
+  char* fix_stack_ptr = nullptr;
   std::set<RoutineType> routine_list;
   RoutinePtr current = nullptr;
   SimpleContext host;
+
+ public:
+  RoutinesManager() {
+    fix_stack_ptr =
+        (char*)ALIGN_ADDRESS((char*)share_stack + SHARE_STACK_SIZE - 1);
+  }
 
  public:
   void Start(RoutinePtr routine);
