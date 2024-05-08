@@ -12,35 +12,33 @@
 
 namespace let_me_see {
 
-void* AlignAddress(void* ptr) {
-  return (char*)((uintptr_t)(ptr) & ~15ull) - sizeof(void*);
-}
+// void RoutinesManager::moveRoutineOut(RoutinePtr routine, char* current_top) {
+//   if (routine == nullptr) return;
+//   char* max_top = share_stack + SHARE_STACK_SIZE;
+//   unsigned int used_size = max_top - current_top;
+//   assert(used_size <= SHARE_STACK_SIZE);
+//   if (used_size > routine->stack_size) {
+//     unsigned int new_size =
+//         static_cast<unsigned int>(used_size * EXPAND_FACTOR);
+//     if (routine->stack_ptr) delete[] routine->stack_ptr;
+//     routine->stack_ptr = new char[new_size];
+//     routine->stack_size = new_size;
+//   }
+//   routine->used_size = used_size;
+//   std::memcpy(routine->stack_ptr, current_top, used_size);
+// }
 
-void RoutinesManager::moveRoutineOut(RoutinePtr routine, char* current_top) {
-  if (routine == nullptr) return;
-  unsigned int used_size = share_stack + SHARE_STACK_SIZE - current_top;
-  assert(used_size <= SHARE_STACK_SIZE);
-  if (used_size > routine->stack_size) {
-    unsigned int new_size = static_cast<unsigned int>(used_size * 1.5);
-    delete[] routine->stack_ptr;
-    routine->stack_ptr = new char[new_size];
-    routine->stack_size = new_size;
-  }
-  routine->used_size = used_size;
-  memcpy(routine->stack_ptr, current_top, used_size);
-  // memset(share_stack, 0, SHARE_STACK_SIZE);
-}
-
-void RoutinesManager::moveRoutineIn(RoutinePtr routine) {
-  if (routine == nullptr) return;
-  char* dest_ptr = fix_stack_ptr - routine->used_size + 1;
-  memcpy(dest_ptr, routine->stack_ptr, routine->used_size);
-}
+// void RoutinesManager::moveRoutineIn(RoutinePtr routine) {
+//   if (routine == nullptr) return;
+//   char* dest_ptr = fix_stack_ptr - routine->used_size + 1;
+//   std::memcpy(dest_ptr, routine->stack_ptr, routine->used_size);
+// }
 
 void RoutinesManager::initRoutine(RoutinePtr routine) {
   if (routine->status != INIT_STATUS) return;
   SimpleContext* ctx_ptr = &(routine->ctx);
-  ctx_ptr->rsp = fix_stack_ptr;
+  char* ptr = new char[SINGLE_STACK_SIZE];
+  ctx_ptr->rsp = ALIGN_ADDRESS((ptr + SINGLE_STACK_SIZE - 1));
   ctx_ptr->rbp = ctx_ptr->rsp;
   ctx_ptr->rip = (void*)innerRoutineRun;
   ctx_ptr->rdi = this;
@@ -67,47 +65,45 @@ void RoutinesManager::innerRoutineRun(RoutinesManagerPtr rm) {
   }
   routine->status = DEAD_STATUS;
   delete[] routine->stack_ptr;
+  routine->used_size = 0;
+  routine->stack_ptr = nullptr;
   routine->stack_size = 0;
   RoutinePtr ret = routine->parent;
-  SimpleContextPtr ctx_ptr = ret == nullptr ? &(rm->host) : &(ret->ctx);
   routine->parent = nullptr;
-  rm->current = nullptr;
-  SetContext(ctx_ptr);
+  rm->current = ret;
+  SimpleContextPtr dest_ctx = ret == nullptr ? &(rm->host) : &(ret->ctx);
+  if (ret) ret->status = RUNNING_STATUS;
+  SetContext(dest_ctx);
 }
 
 void RoutinesManager::ResumeRoutine(RoutinePtr routine) {
-  MAKE_MEMORY_FLAG;  // 内存标记，此时这个变量在栈顶
   if (routine == nullptr) return;
-  // 如果当前协程是死亡或者正在执行的状态就不继续
-  if ((routine->status & (DEAD_STATUS | RUNNING_STATUS))) return;
-  // 先尝试将当前正在执行的协程copy出去（如果有的话）
-  moveRoutineOut(current, &MEMORY_FLAG_NAME);
-  if (routine->status == INIT_STATUS)
-    initRoutine(routine);
-  else if (routine->status == SUSPEND_STATUS)
-    moveRoutineIn(routine);
-  SimpleContext* src_ctx = &host;
+  if (routine->status & (DEAD_STATUS | RUNNING_STATUS)) return;
+  if (routine->status == INIT_STATUS) initRoutine(routine);
+  SimpleContextPtr src_ctx = &host;
   if (current) {
     src_ctx = &(current->ctx);
     current->status = SUSPEND_STATUS;
-    routine->parent = current;
   }
-  routine->status = RUNNING_STATUS;
+  routine->parent = current;
   current = routine;
-  SwapContext(src_ctx, &(routine->ctx));
+  current->status = RUNNING_STATUS;
+  SwapContext(src_ctx, &(current->ctx));
 }
 
 void RoutinesManager::YieldRoutine() {
-  MAKE_MEMORY_FLAG;  // 内存标记，此时这个变量在栈顶
   if (current == nullptr) return;
-  // 先尝试将当前正在执行的协程copy出去（如果有的话）
-  moveRoutineOut(current, &MEMORY_FLAG_NAME);
-  SimpleContextPtr desc_ctx = &host;
-  if (current->parent) desc_ctx = &(current->parent->ctx);
+  SimpleContextPtr src_ctx = &(current->ctx);
+  SimpleContextPtr dest_ctx = &host;
+  RoutinePtr ret = current->parent;
+  if (ret) {
+    dest_ctx = &(current->parent->ctx);
+    current->parent->status = RUNNING_STATUS;
+  }
   current->status = SUSPEND_STATUS;
-  current = current->parent;
-  moveRoutineIn(current);
-  SwapContext(&(current->ctx), desc_ctx);
+  current->parent = nullptr;
+  current = ret;
+  SwapContext(src_ctx, dest_ctx);
 }
 
 }  // namespace let_me_see

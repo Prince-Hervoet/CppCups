@@ -23,6 +23,8 @@ int main() {
   let_me_see::RoutinesManager rm;
   let_me_see::RoutinePtr routine =
       let_me_see::RoutinesManager::CreateRoutine(test, nullptr);
+
+  rm.ResumeRoutine(routine);
   rm.ResumeRoutine(routine);
   std::cout << "run main" << std::endl;
   return 0;

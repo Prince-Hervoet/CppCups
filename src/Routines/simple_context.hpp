@@ -30,7 +30,7 @@ using SimpleContextPtr = SimpleContext*;
 extern "C" {
 extern void GetContext(SimpleContextPtr ctx);
 extern void SetContext(SimpleContextPtr ctx);
-extern void SwapContext(SimpleContextPtr src, SimpleContextPtr desc);
+extern void SwapContext(SimpleContextPtr src, SimpleContextPtr dest);
 }
 
 }  // namespace let_me_see
