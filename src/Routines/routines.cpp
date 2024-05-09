@@ -35,22 +35,25 @@ namespace let_me_see {
 // }
 
 void RoutinesManager::initRoutine(RoutinePtr routine) {
-  if (routine->status != INIT_STATUS) return;
+  if ((routine->status & INIT_STATUS) != 0) return;
   SimpleContext* ctx_ptr = &(routine->ctx);
-  char* ptr = new char[SINGLE_STACK_SIZE];
-  ctx_ptr->rsp = ALIGN_ADDRESS((ptr + SINGLE_STACK_SIZE - 1));
+  routine->stack_ptr = new char[routine->stack_size];
+  ctx_ptr->rsp = ALIGN_ADDR(END_ADDR(routine->stack_ptr, routine->stack_size));
   ctx_ptr->rbp = ctx_ptr->rsp;
   ctx_ptr->rip = (void*)innerRoutineRun;
   ctx_ptr->rdi = this;
   routine->status = READY_STATUS;
 }
 
-RoutinePtr RoutinesManager::CreateRoutine(TaskType func, void* args) {
+RoutinePtr RoutinesManager::CreateRoutine(TaskType func, void* args,
+                                          unsigned int size) {
   if (func == nullptr) return nullptr;
   RoutinePtr nRoutine = new Routine();
   nRoutine->status = INIT_STATUS;
   nRoutine->func = func;
   nRoutine->args = args;
+  nRoutine->stack_size = size;
+  nRoutine->parent = nullptr;
   return nRoutine;
 }
 
@@ -64,10 +67,6 @@ void RoutinesManager::innerRoutineRun(RoutinesManagerPtr rm) {
     std::cout << e.what() << std::endl;
   }
   routine->status = DEAD_STATUS;
-  delete[] routine->stack_ptr;
-  routine->used_size = 0;
-  routine->stack_ptr = nullptr;
-  routine->stack_size = 0;
   RoutinePtr ret = routine->parent;
   routine->parent = nullptr;
   rm->current = ret;
@@ -104,6 +103,14 @@ void RoutinesManager::YieldRoutine() {
   current->parent = nullptr;
   current = ret;
   SwapContext(src_ctx, dest_ctx);
+}
+
+void RoutinesManager::CloseRoutine(RoutinePtr routine) {
+  if (routine == nullptr) return;
+  if (routine->status & RUNNING_STATUS) return;
+  if (routine->stack_ptr) delete[](routine->stack_ptr);
+  routine->stack_size = 0;
+  delete routine;
 }
 
 }  // namespace let_me_see

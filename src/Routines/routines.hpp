@@ -1,7 +1,7 @@
 #ifndef _ROUTINES_H_
 #define _ROUTINES_H_
 
-#include <cstdint>
+#include <any>
 #include <set>
 
 #include "simple_context.hpp"
@@ -19,13 +19,14 @@ namespace let_me_see {
 #define EXPAND_FACTOR (1.5)
 #define ALIGN_MASK (15ull)
 #define ONE_PTR_SIZE sizeof(void*)
-#define ALIGN_ADDRESS(x) \
+#define ALIGN_ADDR(x) \
   ((void*)((char*)((uintptr_t)(x) & ~ALIGN_MASK) - ONE_PTR_SIZE))
 
-using ContextFunc = void (*)();
+#define END_ADDR(array_ptr, size) ((array_ptr) + (size)-1)
+
 class RoutinesManager;
-using ArgsType = void*;
-using TaskType = void (*)(RoutinesManager* rm, void*);
+using ArgsType = std::any;
+using TaskType = void (*)(RoutinesManager* rm, ArgsType);
 
 class Routine {
  public:
@@ -44,6 +45,11 @@ class Routine {
   TaskType func = nullptr;
   ArgsType args = nullptr;
   RoutinePtr parent = nullptr;
+
+ public:
+  RoutinePtr GetParent() const { return parent; }
+  unsigned int GetStackSize() const { return stack_size; }
+  char GetStatus() const { return status; }
 };
 
 class RoutinesManager {
@@ -58,18 +64,16 @@ class RoutinesManager {
   SimpleContext host;
 
  public:
-  RoutinesManager() {
-    // share_stack = new char[SHARE_STACK_SIZE];
-    // fix_stack_ptr =
-    //     (char*)ALIGN_ADDRESS((char*)share_stack + SHARE_STACK_SIZE - 1);
-  }
+  RoutinesManager() {}
 
   ~RoutinesManager() {}
 
  public:
-  static RoutinePtr CreateRoutine(TaskType func, void* args);
+  static RoutinePtr CreateRoutine(TaskType func, void* args,
+                                  unsigned int size = SINGLE_STACK_SIZE);
   void ResumeRoutine(RoutinePtr routine);
   void YieldRoutine();
+  void CloseRoutine(RoutinePtr routine);
 
   void JoinList(RoutinePtr routine) {
     if (routine == nullptr) return;
@@ -77,6 +81,8 @@ class RoutinesManager {
   }
 
   int GetListSize() const { return routine_list.size(); }
+
+  RoutinePtr GetCurrent() const { return current; }
 
   void StartList() {
     auto end = routine_list.end();
@@ -88,15 +94,12 @@ class RoutinesManager {
 
  private:
   void initRoutine(RoutinePtr routine);
-  // void moveRoutineOut(RoutinePtr routine, char* current_top);
-  // void moveRoutineIn(RoutinePtr routine);
   static void innerRoutineRun(RoutinesManagerPtr rm);
 };
 
 using RoutineType = Routine;
 using RoutinePtr = Routine*;
 using RoutinesManagerPtr = RoutinesManager*;
-void* AlignAddress(void* ptr);
 }  // namespace let_me_see
 
 #endif

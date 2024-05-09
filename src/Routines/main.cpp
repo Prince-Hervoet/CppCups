@@ -5,27 +5,26 @@
 
 #include "routines.hpp"
 
-void test(let_me_see::RoutinesManagerPtr rm, void *args) {
+void test(let_me_see::RoutinesManagerPtr rm, let_me_see::ArgsType) {
+  let_me_see::RoutinePtr temp = rm->GetCurrent();
   int a = 1;
+  std::cout << temp->GetParent() << std::endl;
   rm->YieldRoutine();
   std::cout << "run test" << std::endl;
+  std::cout << temp->GetParent() << std::endl;
   int b = 10;
 }
 
 int main() {
-  // let_me_see::SimpleContext c0, c1;
-  // c1.rsp = let_me_see::AlignAddress((char *)malloc(877) + 876);
-  // c1.rbp = c1.rsp;
-  // c1.rip = (void *)test;
-  // let_me_see::SetContext(&c1);
-  // let_me_see::SwapContext(&c0, &c1);
-  // free((char *)c1.rsp);
   let_me_see::RoutinesManager rm;
   let_me_see::RoutinePtr routine =
-      let_me_see::RoutinesManager::CreateRoutine(test, nullptr);
-
+      let_me_see::RoutinesManager::CreateRoutine(test, nullptr, 2048);
+  std::cout << "1: " << routine->GetParent() << std::endl;
   rm.ResumeRoutine(routine);
+  std::cout << "2: " << routine->GetParent() << std::endl;
   rm.ResumeRoutine(routine);
+  std::cout << "3: " << routine->GetParent() << std::endl;
+  rm.CloseRoutine(routine);
   std::cout << "run main" << std::endl;
   return 0;
 }
