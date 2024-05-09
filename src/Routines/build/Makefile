@@ -129,6 +129,30 @@ a/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/a.dir/build.make CMakeFiles/a.dir/build
 .PHONY : a/fast
 
+epoll_pack.o: epoll_pack.cpp.o
+.PHONY : epoll_pack.o
+
+# target to build an object file
+epoll_pack.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/a.dir/build.make CMakeFiles/a.dir/epoll_pack.cpp.o
+.PHONY : epoll_pack.cpp.o
+
+epoll_pack.i: epoll_pack.cpp.i
+.PHONY : epoll_pack.i
+
+# target to preprocess a source file
+epoll_pack.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/a.dir/build.make CMakeFiles/a.dir/epoll_pack.cpp.i
+.PHONY : epoll_pack.cpp.i
+
+epoll_pack.s: epoll_pack.cpp.s
+.PHONY : epoll_pack.s
+
+# target to generate assembly for a file
+epoll_pack.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/a.dir/build.make CMakeFiles/a.dir/epoll_pack.cpp.s
+.PHONY : epoll_pack.cpp.s
+
 main.o: main.cpp.o
 .PHONY : main.o
 
@@ -194,6 +218,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... a"
+	@echo "... epoll_pack.o"
+	@echo "... epoll_pack.i"
+	@echo "... epoll_pack.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

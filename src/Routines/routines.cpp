@@ -1,16 +1,20 @@
 #include "routines.hpp"
 
 #include <cassert>
+#include <cstdint>
 #include <cstring>
 #include <exception>
 #include <iostream>
 
 #include "simple_context.hpp"
 
+
 #define MAKE_MEMORY_FLAG char flag = 0
 #define MEMORY_FLAG_NAME flag
 
 namespace let_me_see {
+
+uint64_t RoutinesManager::inc_id = 0xA;
 
 // void RoutinesManager::moveRoutineOut(RoutinePtr routine, char* current_top) {
 //   if (routine == nullptr) return;
@@ -34,6 +38,47 @@ namespace let_me_see {
 //   std::memcpy(dest_ptr, routine->stack_ptr, routine->used_size);
 // }
 
+void RoutinesManager::initEpollPack() {
+  if (!ep.GetIsClosed()) return;
+  ep.EpollCreate();
+}
+
+ssize_t RoutinesManager::EpollRoutineRead(int fd, char* buffer, size_t size) {
+  int res = 0, empty_count = 0;
+  do {
+    if (empty_count >= TRY_READ_COUNT) {
+      epoll_data_t data;
+      data.ptr = current;
+      EpollEventType ev = EpollPack::MakeEvent(EPOLLIN, data);
+      ep.EpollCtl(EPOLL_CTL_ADD, fd, &ev);
+      YieldRoutine();
+    }
+    empty_count++;
+    res = NonBlockRead(fd, buffer, size);
+  } while (res == 0);
+  return res;
+}
+
+ssize_t RoutinesManager::EpollRoutineWrite(int fd, char* data, size_t size) {
+  int res = 0, empty_count = 0;
+  do {
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      if (empty_count == TRY_READ_COUNT) {
+        epoll_data_t data;
+        data.ptr = current;
+        EpollEventType ev = EpollPack::MakeEvent(EPOLLOUT, data);
+        ep.EpollCtl(EPOLL_CTL_ADD, fd, &ev);
+        YieldRoutine();
+      }
+    } else {
+      break;
+    }
+    empty_count++;
+    res = NonBlockWrite(fd, data, size);
+  } while (res < 0);
+  return res;
+}
+
 void RoutinesManager::initRoutine(RoutinePtr routine) {
   if ((routine->status & INIT_STATUS) != 0) return;
   SimpleContext* ctx_ptr = &(routine->ctx);
@@ -42,7 +87,7 @@ void RoutinesManager::initRoutine(RoutinePtr routine) {
   ctx_ptr->rbp = ctx_ptr->rsp;
   ctx_ptr->rip = (void*)innerRoutineRun;
   ctx_ptr->rdi = this;
-  routine->status = READY_STATUS;
+  routine->setStatus(READY_STATUS);
 }
 
 RoutinePtr RoutinesManager::CreateRoutine(TaskType func, void* args,
@@ -54,6 +99,7 @@ RoutinePtr RoutinesManager::CreateRoutine(TaskType func, void* args,
   nRoutine->args = args;
   nRoutine->stack_size = size;
   nRoutine->parent = nullptr;
+  nRoutine->routine_id = RoutinesManager::inc_id++;
   return nRoutine;
 }
 
@@ -64,7 +110,7 @@ void RoutinesManager::innerRoutineRun(RoutinesManagerPtr rm) {
   try {
     routine->func(rm, routine->args);
   } catch (std::exception& e) {
-    std::cout << e.what() << std::endl;
+    std::cout << "id: " << routine->routine_id << " " << e.what() << std::endl;
   }
   routine->status = DEAD_STATUS;
   RoutinePtr ret = routine->parent;

@@ -18,6 +18,7 @@ set(CMAKE_ASM_TARGET_INCLUDE_PATH
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/home/tester/projects/Routines/epoll_pack.cpp" "CMakeFiles/a.dir/epoll_pack.cpp.o" "gcc" "CMakeFiles/a.dir/epoll_pack.cpp.o.d"
   "/home/tester/projects/Routines/main.cpp" "CMakeFiles/a.dir/main.cpp.o" "gcc" "CMakeFiles/a.dir/main.cpp.o.d"
   "/home/tester/projects/Routines/routines.cpp" "CMakeFiles/a.dir/routines.cpp.o" "gcc" "CMakeFiles/a.dir/routines.cpp.o.d"
   )

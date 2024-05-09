@@ -2,8 +2,10 @@
 #define _ROUTINES_H_
 
 #include <any>
-#include <set>
+#include <cstddef>
+#include <cstdint>
 
+#include "epoll_pack.hpp"
 #include "simple_context.hpp"
 
 #define INIT_STATUS 0
@@ -17,6 +19,7 @@
 namespace let_me_see {
 
 #define EXPAND_FACTOR (1.5)
+#define TRY_READ_COUNT 3
 #define ALIGN_MASK (15ull)
 #define ONE_PTR_SIZE sizeof(void*)
 #define ALIGN_ADDR(x) \
@@ -37,6 +40,7 @@ class Routine {
   friend class RoutinesManager;
 
  private:
+  uint64_t routine_id;
   SimpleContext ctx;
   char status = INIT_STATUS;
   char* stack_ptr = nullptr;
@@ -50,6 +54,10 @@ class Routine {
   RoutinePtr GetParent() const { return parent; }
   unsigned int GetStackSize() const { return stack_size; }
   char GetStatus() const { return status; }
+  uint64_t GetRoutineId() const { return routine_id; }
+
+ private:
+  void setStatus(char newStatus) { status = newStatus; }
 };
 
 class RoutinesManager {
@@ -59,13 +67,13 @@ class RoutinesManager {
   using RoutinesManagerPtr = RoutinesManager*;
 
  private:
-  std::set<RoutinePtr> routine_list;
+  EpollPack ep;
   RoutinePtr current = nullptr;
   SimpleContext host;
+  static uint64_t inc_id;
 
  public:
-  RoutinesManager() {}
-
+  RoutinesManager() { initEpollPack(); }
   ~RoutinesManager() {}
 
  public:
@@ -74,26 +82,13 @@ class RoutinesManager {
   void ResumeRoutine(RoutinePtr routine);
   void YieldRoutine();
   void CloseRoutine(RoutinePtr routine);
-
-  void JoinList(RoutinePtr routine) {
-    if (routine == nullptr) return;
-    routine_list.insert(routine);
-  }
-
-  int GetListSize() const { return routine_list.size(); }
-
   RoutinePtr GetCurrent() const { return current; }
-
-  void StartList() {
-    auto end = routine_list.end();
-    for (auto it = routine_list.begin(); it != end; ++it) {
-      RoutinePtr ptr = *it;
-      ResumeRoutine(ptr);
-    }
-  }
+  ssize_t EpollRoutineRead(int fd, char* buffer, size_t size);
+  ssize_t EpollRoutineWrite(int fd, char* data, size_t size);
 
  private:
   void initRoutine(RoutinePtr routine);
+  void initEpollPack();
   static void innerRoutineRun(RoutinesManagerPtr rm);
 };
 

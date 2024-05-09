@@ -81,12 +81,12 @@ clean: CMakeFiles/a.dir/clean
 CMakeFiles/a.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/a.dir/build.make CMakeFiles/a.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/a.dir/build.make CMakeFiles/a.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/tester/projects/Routines/build/CMakeFiles --progress-num=1,2,3,4 "Built target a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/tester/projects/Routines/build/CMakeFiles --progress-num=1,2,3,4,5 "Built target a"
 .PHONY : CMakeFiles/a.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/a.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/tester/projects/Routines/build/CMakeFiles 4
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/tester/projects/Routines/build/CMakeFiles 5
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/a.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/tester/projects/Routines/build/CMakeFiles 0
 .PHONY : CMakeFiles/a.dir/rule
