@@ -11,14 +11,13 @@ int SetFdNonBlock(int fd) {
     std::cerr << "Error opening file!" << std::endl;
     return -1;
   }
-  // 设置文件描述符为非阻塞模式
   int flags = fcntl(fd, F_GETFL, 0);
   if (flags == -1) {
     std::cerr << "Error getting file flags!" << std::endl;
     close(fd);
     return -1;
   }
-  flags |= O_NONBLOCK;  // 添加非阻塞标志
+  flags |= O_NONBLOCK;
   if (fcntl(fd, F_SETFL, flags) == -1) {
     std::cerr << "Error setting non-blocking mode!" << std::endl;
     close(fd);

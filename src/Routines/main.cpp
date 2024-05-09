@@ -5,7 +5,7 @@
 
 #include "routines.hpp"
 
-void test(let_me_see::RoutinesManagerPtr rm, let_me_see::ArgsType) {
+void test(let_me_see::RoutinesManagerPtr rm, let_me_see::ArgsType args) {
   let_me_see::RoutinePtr temp = rm->GetCurrent();
   int a = 1;
   std::cout << temp->GetParent() << std::endl;

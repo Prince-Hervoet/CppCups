@@ -8,7 +8,6 @@
 
 #include "simple_context.hpp"
 
-
 #define MAKE_MEMORY_FLAG char flag = 0
 #define MEMORY_FLAG_NAME flag
 
@@ -38,11 +37,6 @@ uint64_t RoutinesManager::inc_id = 0xA;
 //   std::memcpy(dest_ptr, routine->stack_ptr, routine->used_size);
 // }
 
-void RoutinesManager::initEpollPack() {
-  if (!ep.GetIsClosed()) return;
-  ep.EpollCreate();
-}
-
 ssize_t RoutinesManager::EpollRoutineRead(int fd, char* buffer, size_t size) {
   int res = 0, empty_count = 0;
   do {
@@ -63,7 +57,7 @@ ssize_t RoutinesManager::EpollRoutineWrite(int fd, char* data, size_t size) {
   int res = 0, empty_count = 0;
   do {
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
-      if (empty_count == TRY_READ_COUNT) {
+      if (empty_count == TRY_WRITE_COUNT) {
         epoll_data_t data;
         data.ptr = current;
         EpollEventType ev = EpollPack::MakeEvent(EPOLLOUT, data);
@@ -90,16 +84,16 @@ void RoutinesManager::initRoutine(RoutinePtr routine) {
   routine->setStatus(READY_STATUS);
 }
 
-RoutinePtr RoutinesManager::CreateRoutine(TaskType func, void* args,
+RoutinePtr RoutinesManager::CreateRoutine(RoutineTaskType func, void* args,
                                           unsigned int size) {
   if (func == nullptr) return nullptr;
   RoutinePtr nRoutine = new Routine();
-  nRoutine->status = INIT_STATUS;
   nRoutine->func = func;
   nRoutine->args = args;
   nRoutine->stack_size = size;
   nRoutine->parent = nullptr;
   nRoutine->routine_id = RoutinesManager::inc_id++;
+  nRoutine->setStatus(INIT_STATUS);
   return nRoutine;
 }
 
@@ -112,7 +106,7 @@ void RoutinesManager::innerRoutineRun(RoutinesManagerPtr rm) {
   } catch (std::exception& e) {
     std::cout << "id: " << routine->routine_id << " " << e.what() << std::endl;
   }
-  routine->status = DEAD_STATUS;
+  routine->setStatus(DEAD_STATUS);
   RoutinePtr ret = routine->parent;
   routine->parent = nullptr;
   rm->current = ret;

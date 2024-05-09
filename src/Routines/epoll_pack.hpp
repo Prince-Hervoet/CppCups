@@ -27,10 +27,13 @@ class EpollPack {
 
  public:
   EpollPack() : is_closed(true), epoll_fd(-1) {}
+  ~EpollPack() {
+    if (!is_closed) CloseEpoll();
+  }
 
   int GetEpollFd() const { return epoll_fd; }
 
-  bool GetIsClosed() { return is_closed; }
+  bool GetIsClosed() const { return is_closed; }
 
   int EpollCreate() {
     epoll_fd = epoll_create1(0);

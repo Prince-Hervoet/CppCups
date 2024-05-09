@@ -18,18 +18,28 @@
 
 namespace let_me_see {
 
-#define EXPAND_FACTOR (1.5)
+// 尝试读取的次数
 #define TRY_READ_COUNT 3
+
+// 尝试写入的次数
+#define TRY_WRITE_COUNT 3
+
+// 对齐掩码
 #define ALIGN_MASK (15ull)
+
+// 获取指针大小
 #define ONE_PTR_SIZE sizeof(void*)
+
+// 地址对齐
 #define ALIGN_ADDR(x) \
   ((void*)((char*)((uintptr_t)(x) & ~ALIGN_MASK) - ONE_PTR_SIZE))
 
+// 获取数组最终一个元素的地址
 #define END_ADDR(array_ptr, size) ((array_ptr) + (size)-1)
 
 class RoutinesManager;
 using ArgsType = std::any;
-using TaskType = void (*)(RoutinesManager* rm, ArgsType);
+using RoutineTaskType = void (*)(RoutinesManager* rm, ArgsType);
 
 class Routine {
  public:
@@ -40,15 +50,15 @@ class Routine {
   friend class RoutinesManager;
 
  private:
-  uint64_t routine_id;
-  SimpleContext ctx;
-  char status = INIT_STATUS;
-  char* stack_ptr = nullptr;
-  unsigned int stack_size = 0;
-  unsigned int used_size = 0;
-  TaskType func = nullptr;
-  ArgsType args = nullptr;
-  RoutinePtr parent = nullptr;
+  uint64_t routine_id;             // 协程id
+  SimpleContext ctx;               // 协程上下文
+  char status = INIT_STATUS;       // 协程状态
+  char* stack_ptr = nullptr;       // 协程栈空间指针
+  unsigned int stack_size = 0;     // 栈大小
+  unsigned int used_size = 0;      // 已经使用的大小，暂时没有使用
+  RoutineTaskType func = nullptr;  // 协程执行的函数
+  ArgsType args = nullptr;         // 协程执行的函数的参数
+  RoutinePtr parent = nullptr;     // 该协程的父协程
 
  public:
   RoutinePtr GetParent() const { return parent; }
@@ -67,29 +77,60 @@ class RoutinesManager {
   using RoutinesManagerPtr = RoutinesManager*;
 
  private:
-  EpollPack ep;
-  RoutinePtr current = nullptr;
-  SimpleContext host;
-  static uint64_t inc_id;
+  EpollPack ep;                  // epoll 结构体
+  RoutinePtr current = nullptr;  // 当前正在执行的routine
+  SimpleContext host;            // 主上下文
+  static uint64_t inc_id;        // 递增routine id
 
  public:
   RoutinesManager() { initEpollPack(); }
   ~RoutinesManager() {}
 
  public:
-  static RoutinePtr CreateRoutine(TaskType func, void* args,
+  /**
+    创建协程结构
+  */
+  static RoutinePtr CreateRoutine(RoutineTaskType func, void* args,
                                   unsigned int size = SINGLE_STACK_SIZE);
+
+  /**
+    执行协程
+  */
   void ResumeRoutine(RoutinePtr routine);
+
+  /**
+    让出协程
+  */
   void YieldRoutine();
+
+  /**
+    释放协程
+  */
   void CloseRoutine(RoutinePtr routine);
+
+  /**
+    获取当前协程结构
+  */
   RoutinePtr GetCurrent() const { return current; }
   ssize_t EpollRoutineRead(int fd, char* buffer, size_t size);
   ssize_t EpollRoutineWrite(int fd, char* data, size_t size);
+  EpollPackType& GetEpollPack() { return ep; }
 
  private:
+  /**
+   初始化协程属性
+  */
   void initRoutine(RoutinePtr routine);
-  void initEpollPack();
+
+  /**
+    内部协程执行的函数，会调用用户传入的函数
+  */
   static void innerRoutineRun(RoutinesManagerPtr rm);
+
+  void initEpollPack() {
+    if (!ep.GetIsClosed()) return;
+    ep.EpollCreate();
+  }
 };
 
 using RoutineType = Routine;
