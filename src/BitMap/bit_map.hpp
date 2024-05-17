@@ -28,13 +28,13 @@ class BitMap {
     bits[pos / kFlag] &= ~(1 << (pos % kFlag));
   }
 
-  int Test(size_t pos) const {
+  int Get(size_t pos) const {
     if (pos >= bit_size) return -1;
     if ((bits[pos / kFlag] & (1 << (pos % kFlag))) == 0) return 0;
     return 1;
   }
 
-  size_t GetBitSize() const { return bit_size; }
+  size_t Size() const { return bit_size; }
 
  private:
   void resizeBits(size_t new_size) {

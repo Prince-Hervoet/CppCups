@@ -5,6 +5,6 @@
 int main() {
   let_me_see::BitMap bitmap(20);
   bitmap.Set(22);
-  std::cout << bitmap.Test(22) << std::endl;
+  std::cout << bitmap.Get(22) << std::endl;
   return 0;
 }
