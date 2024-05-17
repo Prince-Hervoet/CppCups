@@ -4,13 +4,13 @@
 #include <vector>
 namespace let_me_see {
 
-#define CAL_ARRAY_SIZE(x) (((x) + 31) / 32)
+#define FLAG 32
+#define CAL_ARRAY_SIZE(x) (((x) + 31) / FLAG)
 
 class BitMap {
  private:
   std::vector<uint32_t> bits;
   size_t bit_size = 0;
-  static const int kFlag = 32;
 
  public:
   BitMap() {}
@@ -20,17 +20,17 @@ class BitMap {
  public:
   void Set(size_t pos) {
     if (pos >= bit_size) resizeBits(pos + 1);
-    bits[pos / kFlag] |= (1 << (pos % kFlag));
+    bits[pos / FLAG] |= (1 << (pos % FLAG));
   }
 
   void Reset(size_t pos) {
     if (pos >= bit_size) return;
-    bits[pos / kFlag] &= ~(1 << (pos % kFlag));
+    bits[pos / FLAG] &= ~(1 << (pos % FLAG));
   }
 
   int Get(size_t pos) const {
     if (pos >= bit_size) return -1;
-    if ((bits[pos / kFlag] & (1 << (pos % kFlag))) == 0) return 0;
+    if ((bits[pos / FLAG] & (1 << (pos % FLAG))) == 0) return 0;
     return 1;
   }
 
