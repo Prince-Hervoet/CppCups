@@ -35,7 +35,7 @@ namespace let_me_see {
   ((void*)((char*)((uintptr_t)(x) & ~ALIGN_MASK) - ONE_PTR_SIZE))
 
 // 获取数组最终一个元素的地址
-#define END_ADDR(array_ptr, size) ((array_ptr) + (size)-1)
+#define END_ADDR(array_ptr, size) ((array_ptr) + (size) - 1)
 
 class RoutinesManager;
 using ArgsType = std::any;

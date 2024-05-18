@@ -2,7 +2,6 @@
 #define _RADIX_TREE_H_
 
 #include <cstddef>
-#include <iostream>
 #include <utility>
 const char kRed = 1;
 const char kBlack = 2;
