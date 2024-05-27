@@ -10,6 +10,8 @@ function getProxyObject(obj: Object) {
 
 function executor() {}
 
+const a = 1;
+
 const test = getProxyObject({
   a: 1,
   get bar() {
