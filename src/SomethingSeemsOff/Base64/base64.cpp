@@ -18,9 +18,18 @@ static const unsigned char kVar0x3c = 0x3C;
 
 static inline bool isBase64Char(char c) {
   if ((c >= '/' && c <= '9') || (c == '+') || (c >= 'A' && c <= 'Z') ||
-      (c >= 'a' && c <= 'z'))
+      (c >= 'a' && c <= 'z') || (c == '='))
     return true;
   return false;
+}
+
+static inline int base64Index(char c) {
+  if ('A' <= c && c <= 'Z') return c - 'A';
+  if ('a' <= c && c <= 'z') return c - 'a' + 26;
+  if ('0' <= c && c <= '9') return c - '0' + 52;
+  if (c == '+') return 62;
+  if (c == '/') return 63;
+  return 0;  // 如果不是Base64字符，返回-1
 }
 
 std::string Base64Encode(const std::string& target) {
@@ -65,7 +74,7 @@ std::string Base64Encode(const std::string& target) {
   return result;
 }
 
-std::string Base64Decode(std::string& base64_str) {
+std::string Base64Decode(const std::string& base64_str) {
   if (base64_str.length() == 0) return "";
   int str_len = base64_str.length();
   if (str_len % 4 != 0) throw "It's not a vaild base64 string.";
@@ -74,17 +83,21 @@ std::string Base64Decode(std::string& base64_str) {
   for (int i = 0; i < str_len; i = i + 4) {
     unsigned char current_char = base64_str.at(i);
     if (!isBase64Char(current_char)) throw "It's not a vaild base64 string.";
+    current_char = base64Index(current_char);
     aux_var = ((aux_var | current_char) << 2);
 
     current_char = base64_str.at(i + 1);
     if (!isBase64Char(current_char)) throw "It's not a vaild base64 string.";
+    current_char = base64Index(current_char);
     aux_var = (aux_var | ((kVar0x30 & current_char) >> 4));
     result.append(1, aux_var);
+
     aux_var ^= aux_var;
 
-    aux_var = ((kVar0xF | current_char) << 4);
+    aux_var = ((kVar0xF & current_char) << 4);
     current_char = base64_str.at(i + 2);
     if (!isBase64Char(current_char)) throw "It's not a vaild base64 string.";
+    current_char = base64Index(current_char);
     aux_var = (aux_var | ((kVar0x3c & current_char) >> 2));
     result.append(1, aux_var);
 
@@ -93,8 +106,11 @@ std::string Base64Decode(std::string& base64_str) {
     aux_var = ((kVar0x3 & current_char) << 6);
     current_char = base64_str.at(i + 3);
     if (!isBase64Char(current_char)) throw "It's not a vaild base64 string.";
+    current_char = base64Index(current_char);
     aux_var = (aux_var | current_char);
     result.append(1, aux_var);
+
+    aux_var ^= aux_var;
   }
   return result;
 }
@@ -105,5 +121,8 @@ int main() {
       "Aaslkdefj2lkkhjsddoisahjdsf01%^&%^&$okjasdsdfljk12089udfokhasdf;''''p[[]"
       "skkdjfBCD");
   std::cout << result << std::endl;
+
+  std::string result2 = let_me_see::Base64Decode("QUJDREY=");
+  std::cout << result2 << std::endl;
   return 0;
 }
